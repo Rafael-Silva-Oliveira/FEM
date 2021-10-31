@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+#Packages
+```{r}
+library(readr)
+library(tibble)
+
+
+
+```
+
+#Tratamento de dados
+```{r}
+#Passar de tsv para tibble
+curr_diversity = read_tsv("nextstrain_ncov_A-Jun2021-current_diversity.tsv")
+lineage_2 = read_tsv("report_out_lineage_2.tsv")
+
+#Passar variaveis gene para fatores
+df_curr_diversity = as.data.frame(curr_diversity)
+df_curr_diversity$gene = as.factor(df_curr_diversity$gene)
+
+#Passar variaveis Distrito e Lineage para fatores
+df_lineage_2 = as.data.frame(lineage_2)
+df_lineage_2$District = as.factor(df_lineage_2$District)
+df_lineage_2$Lineage = as.factor(df_lineage_2$Lineage)
+
+```
+
+
+#Analise Exploratoria
+```{r}
+
+```
+
+#Regressao
+```{r}
+
+```
+
