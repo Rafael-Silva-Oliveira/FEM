@@ -1800,23 +1800,11 @@ summary {
 <p>#Packages</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShyZWFkcilcbmxpYnJhcnkodGlkeXZlcnNlKVxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShyZWFkcilcbmxpYnJhcnkodGliYmxlKVxuXG5cblxuYGBgIn0= -->
 <pre class="r"><code>library(readr)
-library(tidyverse)</code></pre>
+library(tibble)
+</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSCRdGlkeXZlcnNlkiB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDQuMC40UmVnaXN0ZXJlZCBTMyBtZXRob2RzIG92ZXJ3cml0dGVuIGJ5ICdkYnBseXInOlxuICBtZXRob2QgICAgICAgICBmcm9tXG4gIHByaW50LnRibF9sYXp5ICAgICBcbiAgcHJpbnQudGJsX3NxbCAgICAgIFxuXHUwMDFiWzM3bS0tIFx1MDAxYlsxbUF0dGFjaGluZyBwYWNrYWdlc1x1MDAxYlsyMm0gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0gdGlkeXZlcnNlIDEuMy4wIC0tXHUwMDFiWzM5bVxuXHUwMDFiWzM3bVx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtZ2dwbG90Mlx1MDAxYlszN20gMy4zLjIgICAgIFx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtZHBseXIgIFx1MDAxYlszN20gMS4wLjJcblx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtdGlkeXIgIFx1MDAxYlszN20gMS4xLjIgICAgIFx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtc3RyaW5nclx1MDAxYlszN20gMS40LjBcblx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtcHVycnIgIFx1MDAxYlszN20gMC4zLjQgICAgIFx1MDAxYlszMm12XHUwMDFiWzM3bSBcdTAwMWJbMzRtZm9yY2F0c1x1MDAxYlszN20gMC41LjBcdTAwMWJbMzltXG5cdTAwMWJbMzdtLS0gXHUwMDFiWzFtQ29uZmxpY3RzXHUwMDFiWzIybSAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSB0aWR5dmVyc2VfY29uZmxpY3RzKCkgLS1cblx1MDAxYlszMW14XHUwMDFiWzM3bSBcdTAwMWJbMzRtZHBseXJcdTAwMWJbMzdtOjpcdTAwMWJbMzJtZmlsdGVyKClcdTAwMWJbMzdtIG1hc2tzIFx1MDAxYlszNG1zdGF0c1x1MDAxYlszN206OmZpbHRlcigpXG5cdTAwMWJbMzFteFx1MDAxYlszN20gXHUwMDFiWzM0bWRwbHlyXHUwMDFiWzM3bTo6XHUwMDFiWzMybWxhZygpXHUwMDFiWzM3bSAgICBtYXNrcyBcdTAwMWJbMzRtc3RhdHNcdTAwMWJbMzdtOjpsYWcoKVx1MDAxYlszOW1cbiJ9 -->
-<pre><code>package 㤼㸱tidyverse㤼㸲 was built under R version 4.0.4Registered S3 methods overwritten by &#39;dbplyr&#39;:
-  method         from
-  print.tbl_lazy     
-  print.tbl_sql      
-[37m-- [1mAttaching packages[22m -------------------------------------------------------------------------------------------- tidyverse 1.3.0 --[39m
-[37m[32mv[37m [34mggplot2[37m 3.3.2     [32mv[37m [34mdplyr  [37m 1.0.2
-[32mv[37m [34mtidyr  [37m 1.1.2     [32mv[37m [34mstringr[37m 1.4.0
-[32mv[37m [34mpurrr  [37m 0.3.4     [32mv[37m [34mforcats[37m 0.5.0[39m
-[37m-- [1mConflicts[22m ----------------------------------------------------------------------------------------------- tidyverse_conflicts() --
-[31mx[37m [34mdplyr[37m::[32mfilter()[37m masks [34mstats[37m::filter()
-[31mx[37m [34mdplyr[37m::[32mlag()[37m    masks [34mstats[37m::lag()[39m</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>#Tratamento de dados</p>
@@ -1848,10 +1836,12 @@ cols(
 )
 [36mi[39m Use [38;5;251m[48;5;235m[38;5;251m[48;5;235m`spec()`[48;5;235m[38;5;251m[49m[39m for the full column specifications.</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGZfY3Vycl9kaXZlcnNpdHkgPSBhcy5kYXRhLmZyYW1lKGN1cnJfZGl2ZXJzaXR5KVxuZGZfY3Vycl9kaXZlcnNpdHkkZ2VuZSA9IGFzLmZhY3RvcihkZl9jdXJyX2RpdmVyc2l0eSRnZW5lKVxuXG5kZl9saW5lYWdlXzIgPSBhcy5kYXRhLmZyYW1lKGxpbmVhZ2VfMilcbmRmX2xpbmVhZ2VfMiREaXN0cmljdCA9IGFzLmZhY3RvcihkZl9saW5lYWdlXzIkRGlzdHJpY3QpXG5kZl9saW5lYWdlXzIkTGluZWFnZSA9IGFzLmZhY3RvcihkZl9saW5lYWdlXzIkTGluZWFnZSlcblxuYGBgIn0= -->
-<pre class="r"><code>df_curr_diversity = as.data.frame(curr_diversity)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1Bhc3NhciB2YXJpYXZlaXMgZ2VuZSBwYXJhIGZhdG9yZXNcbmRmX2N1cnJfZGl2ZXJzaXR5ID0gYXMuZGF0YS5mcmFtZShjdXJyX2RpdmVyc2l0eSlcbmRmX2N1cnJfZGl2ZXJzaXR5JGdlbmUgPSBhcy5mYWN0b3IoZGZfY3Vycl9kaXZlcnNpdHkkZ2VuZSlcblxuI1Bhc3NhciB2YXJpYXZlaXMgRGlzdHJpdG8gZSBMaW5lYWdlIHBhcmEgZmF0b3Jlc1xuZGZfbGluZWFnZV8yID0gYXMuZGF0YS5mcmFtZShsaW5lYWdlXzIpXG5kZl9saW5lYWdlXzIkRGlzdHJpY3QgPSBhcy5mYWN0b3IoZGZfbGluZWFnZV8yJERpc3RyaWN0KVxuZGZfbGluZWFnZV8yJExpbmVhZ2UgPSBhcy5mYWN0b3IoZGZfbGluZWFnZV8yJExpbmVhZ2UpXG5cbmBgYCJ9 -->
+<pre class="r"><code>#Passar variaveis gene para fatores
+df_curr_diversity = as.data.frame(curr_diversity)
 df_curr_diversity$gene = as.factor(df_curr_diversity$gene)
 
+#Passar variaveis Distrito e Lineage para fatores
 df_lineage_2 = as.data.frame(lineage_2)
 df_lineage_2$District = as.factor(df_lineage_2$District)
 df_lineage_2$Lineage = as.factor(df_lineage_2$Lineage)
