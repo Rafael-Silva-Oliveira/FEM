@@ -1,0 +1,116 @@
+---
+title: "LogR_PCA"
+author: "Rafael Oliveira"
+date: "12/14/2021"
+output: pdf_document
+---
+# Modulos
+```{r}
+library(readxl)
+library(readr)
+#install.packages("factoextra")
+library(factoextra)
+#install.packages("Methy1IT")
+library("FactoMineR")
+#install.packages("viridis")
+library(viridis)
+#install.packages("paletteer")
+library(paletteer)
+```
+
+
+# Leitura dos dados
+```{r}
+snv_data = as.data.frame(read.csv("snv_data_r.csv"))
+#snv_data[is.na(snv_data)] = 0
+snv_data = snv_data[,-c(1,2)]
+
+```
+
+
+```{r}
+snv_data$clade = as.factor(snv_data$clade)
+```
+
+```{r}
+snv_data
+```
+
+# PCA
+
+
+```{r}
+
+#PCA
+res_pca = PCA(snv_data[,c(2:ncol(snv_data))], graph = T)
+res_pca
+```
+```{r}
+# Eigenvalues
+get_eig(res_pca)
+```
+```{r}
+
+# Scree plot 
+fviz_screeplot(res_pca, addlabels = TRUE, ylim = c(0, 50))
+```
+```{r}
+# Extract the results for varaibles
+
+var =  get_pca_var(res_pca)
+var
+```
+```{r}
+#Coordinates of variables
+head(var$coord)
+```
+```{r}
+#Contribution of variabls
+head(var$contrib)
+```
+```{r}
+# Control var colors using their contribution
+fviz_pca_var(res_pca, col.var="contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = T) #avoid text overlapping)
+```
+```{r}
+# Contribution of variables to PC1
+fviz_contrib(res_pca, choice = "var", axes=1, top=10)
+# PC2
+fviz_contrib(res_pca, choice = "var", axes=2, top=10)
+```
+
+```{r}
+# Extract the results for individuals
+ind = get_pca_ind(res_pca)
+head(ind$coord)
+
+```
+```{r}
+# viridis_pal(option = "D")(19)
+# paletteer_c("scico::berlin", n = 19)
+# 
+# paletteer_d("ggsci::default_igv")
+# 
+
+```
+
+
+```{r}
+# Compute PCA using habillage to specify groups for colouring
+
+fviz_pca_ind(res_pca,
+             label = "none", # hide individual labels
+             habillage = snv_data$clade, # color by groups
+             palette = paletteer_d("ggsci::default_igv",n=19),
+             addEllipses = TRUE # Concentration ellipses
+             )
+
+
+
+```
+
+
+
+# Regressao Logistica
