@@ -1,0 +1,828 @@
+---
+title: "LogR_PCA"
+author: "Rafael Oliveira"
+date: "12/14/2021"
+output:
+  html_document:
+    keep_md: yes
+    fig_width:7
+    fig_height:6
+    dpi = 400
+---
+# Modulos
+```{r}
+library(readxl)
+library(readr)
+#install.packages("factoextra")
+library(factoextra)
+#install.packages("Methy1IT")
+library("FactoMineR")
+#install.packages("viridis")
+library(viridis)
+#install.packages("paletteer")
+library(paletteer)
+library(caret)
+library(mlbench)
+library(foreign)
+library(nnet)
+library(dplyr)
+#install.packages("report")
+library(report)
+library(mlogit)
+library(stargazer)
+library(car)
+library(ggcorrplot)
+library(caret)
+# if (!require(remotes)) {
+#     install.packages("remotes")
+# }
+# remotes::install_github('jorvlan/raincloudplots')
+
+library(raincloudplots)
+
+```
+
+```{r setup-chunk, include=FALSE}
+knitr::opts_chunk$set(dev = "png",
+                      dpi = 300,
+                      fig.width = 7,
+                      echo = FALSE,
+                      cache = TRUE)
+
+```
+
+
+# Leitura dos dados
+
+```{r}
+# snv_data = as.data.frame(read.csv("snv_data.csv"))
+# #snv_data[is.na(snv_data)] = 0
+# snv_data = snv_data[,-c(1)]
+# snv_data[is.na(snv_data)] = 0
+
+```
+
+```{r}
+snv_data_complete = as.data.frame(read.csv("snv_data.csv"))
+snv_data_complete = snv_data_complete[,-c(1)]
+snv_data_complete$clade = as.factor(snv_data_complete$clade)
+snv_data_complete[is.na(snv_data_complete)] = 0
+
+
+
+```
+
+```{r}
+snv_data = as.data.frame(read.csv("snv_data_r.csv")) # > 200
+snv_data[is.na(snv_data)] = 0
+#snv_data = snv_data[,-c(1,2)] #,7,10,11,15,16,17,18,19,20,21,22
+snv_data = snv_data[,-c(1,2)] # 3,4,5,6,7,8,9,10,14,15,16,17,18,19,21
+snv_data
+```
+
+
+```{r}
+# snv_data = as.data.frame(read.csv("snv_data_r2.csv")) #> 5000
+# #snv_data[is.na(snv_data)] = 0
+# snv_data = snv_data[,-c(1,2)]
+# snv_data
+```
+
+
+```{r}
+snv_data$clade = as.factor(snv_data$clade)
+table(snv_data$clade) # we have some clades/variants that are very lowly represented. Remove all clades that are under 200 samples/patients(excluding 19A since it will be our reference for the multinomial logistic regression)
+```
+
+```{r}
+
+
+table(snv_data_complete$clade) #remover todas abaixo de 200 samples - 19B, 20C, 20D, 20G,20H,20J,21A,21B,21D,21F,21G,21H,21I
+clades_sub_200 = c("19B", "20C", "20D", "20G","20H (Beta, V2)","21A (Delta)","21B (Kappa)","21D (Eta)","21F (Iota)","21G (Lambda)","21H (Mu)","21I (Delta)")
+
+
+for (sub_clade in clades_sub_200) {
+      snv_data_complete = snv_data_complete[!(snv_data_complete$clade == sub_clade),]
+}
+
+table(snv_data_complete$clade)
+snv_data_complete # We went from 20110 samples to 19258 when removing the clades < 200 samples
+
+```
+
+
+```{r}
+
+table(snv_data$clade) #remover todas abaixo de 200 samples - 19B, 20C, 20D, 20G,20H,20J,21A,21B,21D,21F,21G,21H,21I
+clades_sub_200 = c("19B", "20C", "20D", "20G","20H (Beta, V2)","21A (Delta)","21B (Kappa)","21D (Eta)","21F (Iota)","21G (Lambda)","21H (Mu)","21I (Delta)")
+
+library(broom)
+for (sub_clade in clades_sub_200) {
+      snv_data = snv_data[!(snv_data$clade == sub_clade),]
+}
+snv_data$clade = droplevels(snv_data$clade)
+
+levels(snv_data$clade)
+
+table(snv_data$clade)
+snv_data # We went from 20110 samples to 19258 when removing the clades < 200 samples
+
+```
+
+
+# PCA
+
+## Aplicar PCA
+
+```{r}
+x = PCA(snv_data_complete[,c(2:ncol(snv_data_complete))], graph = F, scale.unit=T, ncp=5) #scalling ja está como true como default
+x
+```
+
+
+```{r}
+
+#PCA
+res_pca = PCA(snv_data[,c(2:ncol(snv_data))], graph = F, scale.unit=T, ncp=5) #scalling ja está como true como default
+res_pca
+```
+```{r}
+head(get_pca_ind(res_pca)$coord) #coordinates for the individual points
+```
+
+
+
+
+
+
+```{r, echo=FALSE, dpi=500, fig.width=12, fig.height=7}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+cols = as.vector(names(snv_data)[2:19])
+clades = c("19A","20A","20B" ,"20E (EU1)","20I (Alpha, V1)","20J (Gamma, V3)","21J (Delta)")
+
+# levels(snv_data$clade)
+# data_long = pivot_longer(snv_data, cols = names(snv_data)[2:ncol(snv_data)], names_to = "Clades", values_to = "snv")
+# data_long$Clades = as.factor(data_long$Clades)
+# data_long$clade = as.factor(data_long$clade)
+
+# 
+# ggplot(data_long, aes(x=data_long, y=sum(data_long$snv[data_long$Clades]))) + geom_bar()
+# data_long$Clades
+# sum(data_long$snv[data_long$levels(data_long$Clades)])
+# 
+# sum(snv_data$C.T[snv_data$clade=="20B"])
+# levels(data_long$clade)
+
+df = data.frame()
+for (clad in clades) {
+  for (snv in cols) {
+    df[snv,clad] = sum(snv_data[,snv][snv_data$clade == clad])
+  }
+}
+df <- cbind(SNVs = rownames(df), df)
+
+# First, use pivot_longer(), and then use ggplot2:
+# 
+# library(tidyverse)
+# df %>% 
+#     pivot_longer(-Clades) %>% 
+#     ggplot(aes(x=Clades, y=value, fill=name)) + 
+#     geom_col()
+# df
+
+df <- df %>%
+  pivot_longer(-SNVs)
+
+p = ggplot(data = df,
+       aes(x = SNVs,
+           y = value)) +
+  geom_bar(aes(fill = SNVs),
+           stat = 'identity') +
+  facet_wrap(~name, scales = 'free_y') +
+  theme(axis.text.x = element_blank(),
+        aspect.ratio = 0.80)
+p
+
+```
+
+## Obeter eigenvalues 
+```{r}
+# Eigenvalues
+eig = as.data.frame(get_eig(res_pca))
+eig
+
+
+```
+## Plot cumsum da variancia
+```{r}
+plot(eig$cumulative.variance.percent, xlab="Principal component", ylab="Accumulative prop. of varaition explained", ylim = c(0,100), xlim = c(1,10), type="b")
+```
+
+## Scree plot
+
+```{r}
+fviz_screeplot(x, addlabels = TRUE, ylim = c(0, 50))
+
+```
+
+```{r, echo=FALSE, dpi=500, fig.width=10, fig.height=7}
+
+
+# Scree plot 
+fviz_screeplot(res_pca, addlabels = TRUE, ylim = c(0, 50))
+
+fviz_screeplot(res_pca, addlabels = T, ylim = c(0, 50))
+```
+
+## Qualidade da representaçao
+```{r}
+library(corrplot)
+corrplot(res_pca$var$cos2, is.corr=F)
+res_pca$var
+```
+
+## Contribuiçoes das variaveis para as componentes principais
+```{r}
+corrplot(res_pca$var$contrib, is.corr=F)
+
+
+```
+
+## Variaveis
+```{r}
+# Extract the results for varaibles
+
+var =  get_pca_var(res_pca)
+var
+```
+
+## Coordenadas das variaveis
+
+```{r}
+#Coordinates of variables
+head(var$coord)
+```
+
+## Contribuiçao das variaveis
+```{r}
+#Contribution of variabls
+head(var$contrib)
+```
+
+## Grafico de contribuiçao de variaveis
+```{r}
+# Control var colors using their contribution
+fviz_pca_var(res_pca, col.var="contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = T) #avoid text overlapping)
+```
+## Contribuiçao de variaveis para PC1 e PC2
+
+```{r}
+# Contribution of variables to PC1
+fviz_contrib(res_pca, choice = "var", axes=1, top=6)
+# PC2
+fviz_contrib(res_pca, choice = "var", axes=2, top=6)
+
+```
+
+## Extrair os resultados para pontos individuais
+```{r}
+# Extract the results for individuals
+ind = get_pca_ind(res_pca)
+head(ind$coord)
+```
+
+## Dataframe com os pontos individuais do PCA
+```{r}
+pca_val = data.frame(snv_data$clade, ind$coord)
+pca_val$snv_data.clade = as.factor(pca_val$snv_data.clade)
+pca_val
+
+```
+
+
+## Grafico PCA
+
+
+
+
+```{r echo=FALSE, dpi=500, fig.width=10, fig.height=7}
+
+# # Compute PCA using habillage to specify groups for colourin21
+# fviz_pca_ind(res_pca,
+#              label = "none", # hide individual labels
+#              habillage = snv_data$clade, # color by groups
+#              palette = paletteer_d("ggsci::default_igv",n=7),
+#              addEllipses = TRUE # Concentration ellipses
+#              )
+
+
+fviz_pca_biplot(res_pca, 
+                # Individuals
+                geom.ind = "point",
+                repel = T,
+                fill.ind = snv_data$clade, col.ind = "black",
+                pointshape =21, pointsize = 1.5,
+                palette = "jco",
+                addEllipses = TRUE,
+                # Variables
+                alpha.var ="contrib", col.var = "contrib",
+                gradient.cols = "Red",
+                
+                legend.title = list(fill = "Variantes", color = "Contrib",
+                                    alpha = "Contrib")
+                ) 
+
+```
+
+
+```{r}
+
+fviz_pca_biplot(res_pca$var$cos2,
+                geom.ind = "point", 
+                repel=T,
+                fill.ind = snv_data$clade, col.ind="black",
+                pointshape = 21, pointsize = 1.5,
+                palette="jco",
+                addEclipses =F,
+                alpha.var = "cos", col.var = "cos",
+                gradient.cols = "Red",
+                legend.title=list(fill="Variantes", color = "Cos", alpha = "cos"))
+
+res_pca
+
+res_pca$var$cos2
+
+```
+
+
+# LOG REG MULTINOMIAL
+
+## Analise geral
+
+```{r}
+#install.packages("jmv")
+library(jmv)
+descriptives(snv_data, freq =T)
+
+
+
+
+
+```
+
+
+## Modelo Multinomial - Completo
+
+### Matriz de correlaçao com dados originais
+
+```{r}
+library(ggcorrplot)
+
+MatCorr=cor(snv_data[,sapply(snv_data,is.numeric)])
+# MatCorr[upper.tri(MatCorr)] <- 0
+# diag(MatCorr) <- 0
+# MatCorrNew = snv_data[, !apply(MatCorr, 2, function(x) any(abs(x) > 0.70, na.rm = TRUE))]
+# head(MatCorrNew)
+#ggcorrplot(MatCorr)
+ggcorrplot(MatCorr,hc.order = TRUE,type = "lower",lab = TRUE)
+
+```
+
+
+
+
+### Dados de treino e teste - Completo
+
+```{r}
+
+
+
+index <- createDataPartition(snv_data$clade, p = .70, list = FALSE)
+train <- snv_data[index,]
+test <- snv_data[-index,]
+
+# Set the reference
+snv_data$clade = relevel(snv_data$clade, ref = "19A")
+```
+
+
+
+### Modelo completo
+```{r}
+# Training the multinomial classification model
+multinom_model_0 = multinom(clade ~ 1, data=train)
+summary(multinom_model_0)
+
+multinom_model_completo = multinom(clade ~ ., data = train) #C.T+A.G+G.A+G.C+T.C+C.A+G.T+A.C+C.G+A.del+TAT.del+TCTGGTTTT.del+TACATG.del+GATTTC.del
+summary(multinom_model_completo)
+
+
+
+#Convert the coeff to odds
+#install.packages("broom")
+library(broom)
+
+resumo_multinom_model_completo = tidy(multinom_model_completo, conf.int=T, conf.level = 0.95, exponentiate = T) # Este código já tem 1) Coeficientes em exponencial, 2) z-scores, 3) standard errors, 4) respetivos p-values para Wald Z test bilateral
+resumo_multinom_model_completo
+View(resumo_multinom_model_completo)
+# Predicted values are saved as fitted.values in the model object
+
+head(round(fitted(multinom_model_completo),2))
+#The multinomial regression predicts the probability of a particular observation to be part of the said level. This is what we are seeing in the above table. Columns represent the classification levels and rows represent the observations. This means that the first six observation are classified as certain clades
+
+```
+
+
+#### Modelo stepAIC1 (passagem de modelo completo para modelo com 1º step)
+```{r}
+
+library(MASS)
+step1=stepAIC(multinom_model_completo, direction="both")
+step1$anova # display results
+
+multinom_modelo_step1 = multinom(clade ~ C.T + A.G + G.A + G.C + T.C + C.A + G.T + T.A + T.G + A.C + C.G + A.del + TCTGGTTTT.del + TACATG.del + AGTTCA.del, data = train)
+summary(multinom_modelo_step1)      
+
+resumo_multinom_model_step1 = tidy(multinom_modelo_step1, conf.int=T, conf.level = 0.95, exponentiate = T) # Este código já tem 1) Coeficientes em exponencial, 2) z-scores, 3) standard errors, 4) respetivos p-values para Wald Z test bilateral
+resumo_multinom_model_step1
+
+
+multinom_model_rrr_step =  exp(coef(multinom_modelo_step1))
+multinom_model_rrr_step
+# Predicted values are saved as fitted.values in the model object
+
+
+step2 = stepAIC(multinom_modelo_step1, direction="both")
+step2$anova
+
+```
+
+
+* NOTA: O modelo com o nome `multinom_model_completo` é o modelo antes da seleção automatica de preditos e o nome `multinom_model_step` é o modelo apos seleçao automatica 
+
+#### Verificar Z-score para o modelo (Wald Z) - NOTA: Estes valores da estatistica (z scores) e os respetivos p-values (p) já se encontram no tibble com o nome `resumo_multinom_model_completo`. Os proximos 4 blocos (que contem as variaveis z, p e testes do chisq) servem apenas para confirmar os resultados.
+
+* Usado para determinar se um determinado preditor é significante ou nao (dividir coeficiente pelo desvio padrao) - https://stats.stackexchange.com/questions/60074/wald-test-for-logistic-regression
+
+```{r}
+z = summary(multinom_model_completo)$coefficients/summary(multinom_model_completo)$standard.errors
+z
+
+```
+
+#### Calcular p value (2-tailed z test)
+
+```{r}
+p = round((1 - pnorm(abs(z), 0, 1)) * 2,digits=5)
+p
+```
+
+
+#### Verificar o fit do modelo
+
+```{r}
+detach("package:jmv", unload=T)
+#Comparar o nosso modelo completo com o modelo vazio (intercept)
+anova(multinom_model_0, multinom_model_completo)
+
+
+```
+
+* O LL é uma medida que nos indica a variabilidade não explicada nos nossos dados. A diferença ou mudança no LL indica quanta nova variancia foi explicada pleo modelo
+* Teste do qui-quadrado testa a diminuiçao da variancia nao explicada a partir do modelo baseline para o modelo final. Esta alteraçao é significativa o que significa que o nosso modelo final explica uma quantidade significante da variabilidade original
+* O LR chi-suqared com p-value < 0.05 diz-nos que o nosso modelo consegue ter um melhor "fit" do que o modelo vazio (modelo sem preditores)
+
+#### Calcular Goodness of fit
+
+```{r}
+# Verificar a probabilidade predita para cada clade/variante/grupo
+head(multinom_model_completo$fitted.values,30)
+head(round(fitted(multinom_model_completo),2))
+
+# Prever resultados:
+head(predict(multinom_model_completo),30)
+
+# As probabilidades estao concordantes com os resultados previstos (verificar a tabela que testa o modelo com os dados de teste)
+
+
+#Test goodness of fit
+ # Usado para determinar se existe diferença significativa entre as frequencias esperadas vs frequencias observadas em 1 ou mais categorias de uma tabela de contençao. p-value < 0.05 logo, rejeitamos H0
+      # Se Ho for verdadeira, o observado e esperado vai ser muito semelhante e estatistica tende a ser 0
+      # Se H1 for verdadeira, estatistica assume valores muito grandes, afastando-se de Ho → mais heterogeneos sao os grupos ou maior é o desvio
+
+chisq.test(train$clade, predict(multinom_model_completo)) # dados de treino (clade) vs prevsao feita pelo modelo completo 
+
+chisq.test(train$clade, predict(multinom_modelo_step1))
+
+```
+
+#### Qualidade e Significado do Modelo
+
+```{r}
+
+### Qualidade e Significado do Modelo completo e modelo step AIC
+            
+
+
+
+
+########################################################
+
+      #Deviance
+deviance(multinom_model_0)
+deviance(multinom_model_completo)
+deviance(multinom_modelo_step1)
+
+########################################################
+
+      #AIC
+AIC(multinom_model_completo)
+AIC(multinom_model_0)
+AIC(multinom_modelo_step1)
+
+
+########################################################
+
+      #Hoslem 
+#install.packages("generalhoslem")
+library(generalhoslem)
+
+#H0: Modelo corrente é apropriado vs Modelo nao é apropriado
+
+logitgof(train$clade,fitted(multinom_model_completo) ,ord=F, g=10) #como p value = 1, concluimos que ha indicaçao que nao ha evidencia de que as frequencias observadas sejam muito diferentes das esperadas (evidencia de um bom fit). Este teste vai comparar frequencias observadas com as esperadas do outcome e fazer um teste estatistico que é distribuido de acordo com a distribuiçao qui-quadrado. 
+# Teste HL para modelo step aic
+logitgof(train$clade,fitted(multinom_modelo_step1) ,ord=F, g=10)
+
+
+
+########################################################
+
+library(DescTools)
+
+#PseudoR2 para o modelo completo
+PseudoR2(multinom_model_completo, which=c("McFadden")) # McFadden = LL(null) - LL(completo) / LL(null) -> 0.98. Indica uma relaçao de 98% entre os preditores e o previsto.
+PseudoR2(multinom_model_completo, which=c("Nagelkerke")) #Indica relaçao de 99% entre preditores e previsto
+PseudoR2(multinom_model_completo, which=c("CoxSnell"))
+
+
+#PseudoR2 para o modelo step aic
+PseudoR2(multinom_modelo_step1, which=c("McFadden"))
+
+
+#NOTA: estas estatisticas na regresso logistica nao significam o mesmo que os R quadrados na regressao com metodo OLS (proporçao de variancia da resposta explicada pelos preditores).
+
+########################################################
+
+      # Accuracy / tabela de classificaçao - MODELO COMPLETO ########################################################
+
+            # Predicting and validating the model
+                  # Predicting the values for train dataset
+train$cladePredicted <- predict(multinom_model_completo, newdata = train, "class")
+#Classification table
+confusionMatrix(train$cladePredicted, train$clade) #confusionMatrix(predicted,actual) - https://rpubs.com/beane/n4_2
+
+#Calculating accruracy - sum of diagonal elements divided by total obs
+#tab_train = table(train$clade, train$cladePredicted)
+#round((sum(diag(tab_train))/sum(tab_train))*100,2)
+
+
+# Predicting the class for test dataset
+test$cladePredicted <- predict(multinom_model_completo, newdata = test, "class")
+# Tabela de confusao para os dados de teste com o modelo completo
+confusionMatrix(test$cladePredicted, test$clade)
+
+
+#Calculating accruracy - Já calculada na matriz de confusao do package caret
+#tab_test <- table(test$clade, test$cladePredicted )
+#round((sum(diag(tab_test))/sum(tab_test))*100,2) - NOTA: poderiamos usar este metodo para ver a precisao do modelo se a tabela não tivesse as variantes que foram removidas no inicio (todas as variantes que estao pouco representadas -> menos de 200 observaçoes, por exemplo).O facto desta table ainda ter os valores "0" de variantes que não estáo presentes nos dados originais, vai alterar bastante os resultados. Neste caso, vamos usar a matriz de confusão que já trata desse pormenor e apresenta estatisticas mais robustas.
+
+
+      # Accuracy table - MODELO STEP1 #############################################################################################
+
+# Predicting the values for train dataset
+train$cladePredictedStep <- predict(multinom_modelo_step1, newdata = train, "class")
+#Classification table
+confusionMatrix(train$cladePredictedStep, train$clade)
+
+#Calculating accruracy - Já calculada na matriz de confusao do package caret
+#tab_train_step = table(train$clade, train$cladePredictedStep)
+#round((sum(diag(tab_train_step))/sum(tab_train_step))*100,2)
+
+# Predicting the class for test dataset
+test$cladePredictedStep <- predict(multinom_modelo_step1, newdata = test, "class")
+# Tabela de confusao para os dados de teste com o modelo de seleçao de variaveis automatica
+cm_teste = confusionMatrix(test$cladePredictedStep, test$clade)
+cm_teste
+
+#tab_test_step <- table(test$clade, test$cladePredictedStep)
+#round((sum(diag(tab_test_step))/sum(tab_test_step))*100,2)
+
+########################################################
+# LR Test para o modelo completo
+
+library(lmtest)
+lrtest(multinom_model_0,multinom_model_completo) # modelo vazio vs modelo completo - semelhante a chisq.test do goodness of fit
+indels = c("A.T","C.T","A.G","G.A","G.C","T.C","C.A","G.T","A.C","C.G","A.del","TAT.del","TCTGGTTTT.del","TACATG.del","GATTTC.del")
+
+my_list = list()
+# for (i in 1:length(indels)) {
+#       assign(paste0("lrtest_results_",indels[i]), my_list[[i]]) = lrtest(multinom_model_completo, indels[i])
+# }
+my_list <- lapply(indels, function(i) lrtest(multinom_model_completo, i))
+names(my_list) = paste0("lrtest_results_", indels)
+my_list # estes resultados podem ser usados para obter a significancia dos preditores para o modelo. Todos os preditores que têm p-value do chisq < 0.05 têm efeitos significativos na prediçao da varainte tendo em conta os SNVs
+
+# Estes resultados indicam quais os preditores que nos permitem prever a categoria de resposta (qual a variante), mas nao nos dizem qual o efeito. Para isso teremos que olhar para os parametros estimados (Beta) tendo em conta a clade 19A como referencia
+
+# * O LL é uma medida que nos indica a variabilidade não explicada nos nossos dados. A diferença ou mudança no LL indica quanta nova variancia foi explicada pleo modelo
+# * Teste do qui-quadrado testa a diminuiçao da variancia nao explicada a partir do modelo baseline para o modelo final. Esta alteraçao é significativa o que significa que o nosso modelo final explica uma quantidade significante da variabilidade original
+# * O LR chi-suqared com p-value < 0.05 diz-nos que o nosso modelo consegue ter um melhor "fit" do que o modelo vazio (modelo sem preditores)
+
+
+########################################################
+
+
+      # Resultados gerais (OR, AIC, values) em formato de publicaçao
+
+multinom_model_rrr =  exp(coef(multinom_model_completo))
+
+stargazer(multinom_model_completo, type="html", coef=list(multinom_model_rrr), out="multinom_model.htm")
+
+multinom_model_rrr_Step =  exp(coef(multinom_modelo_step1))
+
+#stargazer(multinom_modelo_step1, type="html", coef=list(multinom_model_rrr_Step), out="multinom_model_step.htm")
+
+```
+
+```{r echo=FALSE, fig.height=4, fig.width=8, dpi=500}
+
+plt_teste = as.data.frame(cm_teste$table)
+ggplot(plt_teste, aes(Prediction,Reference, fill= Freq)) +
+        geom_tile() + geom_text(aes(label=Freq)) +
+        scale_fill_gradient(low="white", high="#009194") +
+        labs(x = "Reference",y = "Prediction") +
+        scale_x_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)")) +
+        scale_y_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)"))
+
+```
+
+
+## Modelo Multinomial - PCA
+
+### Matriz de correlaçao com componentes principais
+```{r, echo=FALSE, dpi=500, fig.width=5, fig.height=4}
+
+library(ggcorrplot)
+
+MatCorr=cor(pca_val[,sapply(pca_val,is.numeric)])
+#ggcorrplot(MatCorr)
+ggcorrplot(MatCorr,hc.order = TRUE,type = "lower",lab = TRUE) # Podemos reparar que ao usar as componentes principais, removemos o problema de variaveis demasiado correlacionadas uma vez que cada dimensao/componente principal nao vai estar correlacionada com as restantes
+
+```
+
+### Dados de treino e teste - PCA
+```{r}
+library(caret)
+set.seed(42)
+index_pca <- createDataPartition(pca_val$snv_data.clade, p = .70, list = FALSE)
+train_pca <- pca_val[index_pca,]
+test_pca <- pca_val[-index_pca,]
+
+# Set the reference
+pca_val$snv_data.clade = relevel(pca_val$snv_data.clade, ref = "19A")
+
+```
+
+### Modelo PCA
+```{r}
+
+# Training the multinomial classification model
+
+multinom_model_pca = multinom(snv_data.clade ~., data = train_pca)
+summary(multinom_model_pca)
+
+#resumo_multinom_model_PCA = tidy(multinom_model_pca, conf.int=T, conf.level = 0.95, exponentiate = T) # Este código já tem 1) Coeficientes em exponencial, 2) z-scores, 3) standard errors, 4) respetivos p-values para Wald Z test bilateral
+#resumo_multinom_model_PCA
+
+
+#exp(cbind(OR = coef(multinom_model_pca)))
+
+# Predicted values are saved as fitted.values in the model object
+
+head(round(fitted(multinom_model_pca),2))
+
+#Convert the coeff to odds
+exp(cbind(OR = coef(multinom_model_pca), confint(multinom_model_pca)))
+
+# Predicted values are saved as fitted.values in the model object
+
+head(round(fitted(multinom_model_pca),2))
+
+#The multinomial regression predicts the probability of a particular observation to be part of the said level. This is what we are seeing in the above table. Columns represent the classification levels and rows represent the observations. This means that the first six observation are classified as certain clades
+
+
+### Qualidade e Significado do Modelo completo e modelo step AIC
+            
+
+########################################################
+
+      #Deviance
+deviance(multinom_model_0)
+deviance(multinom_model_completo)
+deviance(multinom_modelo_step1)
+deviance(multinom_model_pca)
+########################################################
+
+      #AIC
+AIC(multinom_model_completo)
+AIC(multinom_model_0)
+AIC(multinom_modelo_step1)
+AIC(multinom_model_pca)
+
+
+########################################################
+
+      #Hoslem 
+#install.packages("generalhoslem")
+library(generalhoslem)
+
+#H0: Modelo corrente é apropriado vs Modelo nao é apropriado
+
+logitgof(train_pca$snv_data.clade,fitted(multinom_model_pca) ,ord=F, g=10) 
+
+########################################################
+
+library(DescTools)
+
+#PseudoR2 para o modelo completo
+PseudoR2(multinom_model_pca, which=c("McFadden")) # McFadden = LL(null) - LL(completo) / LL(null) -> 0.98. Indica uma relaçao de 98% entre os preditores e o previsto.
+PseudoR2(multinom_model_pca, which=c("Nagelkerke")) #Indica relaçao de 99% entre preditores e previsto
+PseudoR2(multinom_model_pca, which=c("CoxSnell"))
+
+#NOTA: estas estatisticas na regresso logistica nao significam o mesmo que os R quadrados na regressao com metodo OLS (proporçao de variancia da resposta explicada pelos preditores).
+
+########################################################
+
+      # Accuracy / tabela de classificaçao - MODELO COMPLETO ########################################################
+
+            # Predicting and validating the model
+                  # Predicting the values for train dataset
+train_pca$cladePredictedPCA <- predict(multinom_model_pca, newdata = train_pca, "class")
+#Classification table
+
+
+confusionMatrix(train_pca$cladePredictedPCA, train_pca$snv_data.clade) #confusionMatrix(predicted,actual) - https://rpubs.com/beane/n4_2
+train_pca
+#Calculating accruracy - sum of diagonal elements divided by total obs
+#tab_train = table(train$clade, train$cladePredicted)
+#round((sum(diag(tab_train))/sum(tab_train))*100,2)
+
+# Predicting the class for test dataset
+test_pca$cladePredictedPCA <- predict(multinom_model_pca, newdata = test_pca, "class")
+# Tabela de confusao para os dados de teste com o modelo completo
+cm_teste_pca = confusionMatrix(test_pca$cladePredictedPCA, test_pca$snv_data.clade) #confusionMatrix(predicted,actual) - https://rpubs.com/beane/n4_2
+cm_teste_pca
+########################################################
+
+```
+
+
+```{r}
+plt_teste = as.data.frame(cm_teste_pca$table)
+ggplot(plt_teste_pca, aes(Prediction,Reference, fill= Freq)) +
+        geom_tile() + geom_text(aes(label=Freq)) +
+        scale_fill_gradient(low="white", high="#009194") +
+        labs(x = "Reference",y = "Prediction") +
+        scale_x_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)")) +
+        scale_y_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)"))
+
+
+```
+
+```{r, echo=FALSE, dpi=500, fig.width=12, fig.height=7}
+plt_teste_pca = as.data.frame(cm_teste_pca$table)
+ggplot(plt_teste_pca, aes(Prediction,Reference, fill= Freq)) +
+        geom_tile() + geom_text(aes(label=Freq)) +
+        scale_fill_gradient(low="white", high="#009194") +
+        labs(x = "Reference",y = "Prediction") +
+        scale_x_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)")) +
+        scale_y_discrete(labels=c("19A","20A","20B","20E","20I", "20J(Gamma)", "20J (Delta)"))
+
+
+
+```
+
+```{r}
+plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE)
+plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
+file.copy(from=plots.png.paths, to="C:/Users/Rafael/Desktop/main/University/BioinformaticaClinica/1Semestre/FEM/Projeto/Entrega")
+
+
+
+```
+

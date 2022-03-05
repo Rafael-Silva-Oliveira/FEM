@@ -1,0 +1,4 @@
+- O ficheiro "data.csv" é o resultado proveniente da plataforma "Nextstrain"
+- O ficheiro "Relatório_FEM.pdf" é um relatório de atividades/sumário do que foi feito. O artigo cientifico ainda será realizado nos próximos meses depois de experimentar análises mais robustas. Neste relatório é possível também encontrar um Abstract em Inglês apenas porque foi um dos resumos submetidos para o "Bioinformatics Open Days" a decorrer entre 3-5 de Março em Braga.
+- O ficheiro snv_data.csv possui as 251 SNVs
+- O ficheiro snv_data_r.csv possui as 19 SNVs após remoção de variantes pouco representadas ou contagens inferiores a 200
